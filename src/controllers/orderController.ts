@@ -3,10 +3,14 @@ import orderSchema from "../models/orderModel";
 import orderItemSchema from "../models/order-Item";
 import { getEsewaPaymentHash } from "../../services/Esewa";
 import { stripePaymentGateway } from "../../services/StripePaymentGateway";
+import { sendOrdredEmail } from "../../utils/SendMail";
+import userSchema from "../models/authModel";
+import fs from "fs";
+import path from "path";
 
 export const createOrder = async (req: Request, res: Response) => {
   const paymentMethod = req.query.mode as string;
-  
+
   let STATUS_CODE = 201;
   let paymentInitiate: any = null;
   try {
@@ -46,31 +50,65 @@ export const createOrder = async (req: Request, res: Response) => {
       phone: req.body.phone,
       user: req.body.user,
     });
+
     order = await order.save();
-
-
-    if(paymentMethod === "esewa"){
-       paymentInitiate = await getEsewaPaymentHash({
-        amount: order.totalPrice,
-        transaction_uuid: order._id,
-      });
-    }
-
-    if(paymentMethod === "stripe"){
-      const paymentSession = await stripePaymentGateway(order);
-      paymentInitiate = paymentSession.id;
-      // const lineItems = req.body.orderItems.map((order:any)=>({
-      //   price_data:{
-      //     currency
-      //   }
-      // }))
-    }
-   
 
     if (!order) {
       STATUS_CODE = 400;
       throw new Error("something went wrong");
     }
+
+    if (paymentMethod === "esewa") {
+      paymentInitiate = await getEsewaPaymentHash({
+        amount: order.totalPrice,
+        transaction_uuid: order._id,
+      });
+    }
+
+    if (paymentMethod === "stripe") {
+      const paymentSession = await stripePaymentGateway(order);
+      paymentInitiate = paymentSession.id;
+    }
+
+    let user = await userSchema.findOne({ _id: req.body.user });
+
+    const emailTemplatePath = path.join(__dirname, "public", "email.html");
+
+    let emailTemplate = fs.readFileSync(emailTemplatePath, "utf8");
+
+    // Generate Order Items HTML
+    const orderItemsHTML = savedOrderItems
+      .map(
+        (item) =>
+          `
+      <tr>
+        <td>${item.product.title}</td>
+        <td>${item.quantity}</td>
+        <td>${item.product.price}</td>
+      </tr>
+    `
+      )
+      .join("");
+
+    emailTemplate = emailTemplate
+      .replace("[Customer Name]", user?.fullname ?? "")
+      .replace("[Order Number]", order._id.toString())
+      .replace("[Total Price]", totalPrice)
+      .replace("[Product Name]", orderItemsHTML)
+      .replace("[Name]", user?.fullname ?? "")
+      .replace("[Address]", `${order.shippingAddress1}`)
+      .replace("[City]", order.city)
+      .replace("[State]", order.country)
+      .replace("[ZIP]", String(order.zip))
+      .replace("[Phone]", String(order.phone));
+    // .replace('[Order Details URL]', orderDetailsURL);
+
+    sendOrdredEmail({
+      from: "e-store <estorenep@gmail.com>",
+      to: user?.email ?? "",
+      subject: "Account Activation Token",
+      html: emailTemplate,
+    });
 
     return res
       .status(STATUS_CODE)

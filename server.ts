@@ -6,6 +6,7 @@ import bodyparser from "body-parser";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import path from "path";
 
 import {
   authRoutes,
@@ -18,9 +19,9 @@ const app: Application = express();
 const port = process.env.PORT || 8000;
 
 //middlewares
+app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyparser.json());
 app.use(morgan("dev"));
-// app.use("/public/blog", express.static("public/blog"));
 app.use(cookieParser());
 app.use(cors());
 
@@ -30,8 +31,13 @@ app.use("/api", productRoutes);
 app.use("/api", orderRoutes);
 app.use("/api", paymentRoutes);
 
+//for testing
 app.get("/", function (req, res) {
-  res.sendFile(__dirname + "/test.html");
+  res.sendFile(path.join(__dirname, "public", "test.html"));
+});
+
+app.get("/email", function (req, res) {
+  res.sendFile(path.join(__dirname, "public", "email.html"));
 });
 
 app.listen(port, () => {

@@ -40,7 +40,7 @@ export const completePayment = async (req: Request, res: Response) => {
 
     // }
 
-    return res.redirect(`${process.env.FRONT_URL}`)
+    return res.redirect(`${process.env.FRONT_URL}/success`);
 
     // return res.status(STATUS_CODE).json({
     //   success: true,
@@ -51,4 +51,3 @@ export const completePayment = async (req: Request, res: Response) => {
     return res.status(STATUS_CODE).json({ status: false, error: err });
   }
 };
-

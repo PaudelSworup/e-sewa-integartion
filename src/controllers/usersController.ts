@@ -205,3 +205,101 @@ export const Login = async (req: Request, res: Response) => {
     return res.status(STATUS_CODE).json({ success: false, error: err.message });
   }
 };
+
+//forgot password
+export const forgotPassword = async (req: Request, res: Response) => {
+  let STATUS_CODE = 201;
+  try {
+    const user = await userSchema.findOne({
+      email: req.body.email.toLowerCase(),
+    });
+
+    if (!user) {
+      STATUS_CODE = 400;
+      throw new Error("email account doesnot exist");
+    }
+
+    let token = new tokenSchema({
+      token: crypto.randomBytes(16).toString("hex"),
+      userId: user._id,
+      expiresIn: addMinutes(Date.now(), 20),
+    });
+
+    token = await token.save();
+
+    if (!token) {
+      STATUS_CODE = 400;
+      throw new Error("something went wrong");
+    }
+
+    // if (token.expiresIn.getTime() < Date.now()) {
+    //  STATUS_CODE = 401
+    //  throw new Error("expired roken")
+    // }
+
+    // const resetPassword = `${process.env.CLIENT_SIDE}/api/resetpassword/${token.token}`;
+
+    sendEmail({
+      //   from: "KCTLIBRARY 📧 <kct.edu.gmail.com",
+      //   to: user.email,
+      //   subject: "Password Reset",
+      //   text: `hello ${user.fullname}, click your verificatinn link to continue`,
+      //   html: `<p>Reset your password by clicking below link</p>
+      // <br>
+      // <a href="${resetPassword}"><button>Reset Your Password</button></a>`,
+
+      from: "e-store <estorenep@gmail.com>",
+      to: user.email,
+      subject: "Password Reset successful",
+      text: `hello ${user.fullname}, click your verificatinn link to continue`,
+      html: `  
+      <p>your activation url is http://localhost:3030/api/auth/resetpassword/${token.token}
+    `,
+    });
+
+    return res
+      .status(STATUS_CODE)
+      .json({ success: true, message: "forgot password link has been sent" });
+  } catch (err: any) {
+    return res
+      .status(STATUS_CODE)
+      .json({ success: true, message: err.message });
+  }
+};
+
+// reset password
+export const resetPassword = async (req: Request, res: Response) => {
+  let STATUS_CODE = 201;
+  try {
+    let token = await tokenSchema.findOne({ token: req.params.token });
+
+    if (!token) {
+      STATUS_CODE = 401;
+      throw new Error("Invalid token!");
+    }
+
+    if (token.expiresIn.getTime() < Date.now()) {
+      STATUS_CODE = 401;
+      throw new Error("expired roken");
+    }
+    let user = await userSchema.findOne({ _id: token.userId });
+
+    if (!user) {
+      STATUS_CODE = 404;
+      throw new Error("unable to find the user for valid token");
+    }
+
+    user.password = await bcrypt.hash(req.body.password, 10);
+    user = await user.save();
+
+    if (!user) {
+      STATUS_CODE = 401;
+      throw new Error("something went wrong");
+    }
+    return res
+      .status(STATUS_CODE)
+      .json({ success: true, message: "Password has been reset successfully" });
+  } catch (err: any) {
+    return res.status(STATUS_CODE).json({ success: false, error: err.message });
+  }
+};
