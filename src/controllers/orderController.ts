@@ -72,7 +72,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
     let user = await userSchema.findOne({ _id: req.body.user });
 
-    const emailTemplatePath = path.join(__dirname, "public", "email.html");
+    const emailTemplatePath = path.join(process.cwd(), "public", "email.html");
 
     let emailTemplate = fs.readFileSync(emailTemplatePath, "utf8");
 
