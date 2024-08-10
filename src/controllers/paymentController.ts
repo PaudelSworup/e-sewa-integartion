@@ -53,7 +53,10 @@ export const completePayment = async (req: Request, res: Response) => {
 };
 
 export const sendStripeApi = async (req: Request, res: Response) => {
-  res.status(200).json({
-    stripeApiKey: process.env.STRIPE_API_KEY,
-  });
+  try {
+    res.status(200).json({
+      success: true,
+      stripeApiKey: process.env.STRIPE_API_KEY,
+    });
+  } catch (err: any) {}
 };
