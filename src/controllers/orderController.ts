@@ -13,6 +13,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
   let STATUS_CODE = 201;
   let paymentInitiate: any = null;
+
   try {
     const orderItemsIds = Promise.all(
       req.body.orderItems.map(async (orderItem: any) => {
@@ -106,7 +107,7 @@ export const createOrder = async (req: Request, res: Response) => {
     sendOrdredEmail({
       from: "e-store <estorenep@gmail.com>",
       to: user?.email ?? "",
-      subject: "Account Activation Token",
+      subject: "order confirmation",
       html: emailTemplate,
     });
 
