@@ -2,16 +2,13 @@ import { Request, Response } from "express";
 import orderSchema from "../models/orderModel";
 import { verifyEsewaPayment } from "../../services/Esewa";
 import Payment from "../models/paymentSchema";
+
 export const completePayment = async (req: Request, res: Response) => {
   const { data } = req.query;
-
-  console.log(data);
   let STATUS_CODE = 201;
-  //   console.log(req.body.userId);
-
   try {
     const paymentInfo = await verifyEsewaPayment(data);
-    console.log(paymentInfo);
+    // console.log(paymentInfo);
 
     if (!paymentInfo || paymentInfo.decodedData.status !== "COMPLETE") {
       STATUS_CODE = 400;
@@ -39,14 +36,19 @@ export const completePayment = async (req: Request, res: Response) => {
       user: orderedItem.user,
     });
 
-    return res.status(STATUS_CODE).json({
-      success: true,
-      message: "Payment successful",
-      paymentData,
-    });
+    // if(paymentData){
+
+    // }
+
+    return res.redirect(`${process.env.FRONT_URL}`)
+
+    // return res.status(STATUS_CODE).json({
+    //   success: true,
+    //   message: "Payment successful",
+    //   paymentData,
+    // });
   } catch (err: any) {
     return res.status(STATUS_CODE).json({ status: false, error: err });
   }
-  //   const orderedItem = await orderSchema.find({user:user});
-  //   console.log(orderedItem);
 };
+

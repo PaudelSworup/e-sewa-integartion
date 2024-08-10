@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema<IOrder>({
   },
   country: {
     type: String,
-    required: true,
+    default: "Nepal",
   },
   phone: {
     type: Number,

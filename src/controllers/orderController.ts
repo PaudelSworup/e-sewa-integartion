@@ -2,9 +2,13 @@ import { Request, Response } from "express";
 import orderSchema from "../models/orderModel";
 import orderItemSchema from "../models/order-Item";
 import { getEsewaPaymentHash } from "../../services/Esewa";
+import { stripePaymentGateway } from "../../services/StripePaymentGateway";
 
 export const createOrder = async (req: Request, res: Response) => {
+  const paymentMethod = req.query.mode as string;
+  
   let STATUS_CODE = 201;
+  let paymentInitiate: any = null;
   try {
     const orderItemsIds = Promise.all(
       req.body.orderItems.map(async (orderItem: any) => {
@@ -44,10 +48,24 @@ export const createOrder = async (req: Request, res: Response) => {
     });
     order = await order.save();
 
-    const paymentInitiate = await getEsewaPaymentHash({
-      amount: order.totalPrice,
-      transaction_uuid: order._id,
-    });
+
+    if(paymentMethod === "esewa"){
+       paymentInitiate = await getEsewaPaymentHash({
+        amount: order.totalPrice,
+        transaction_uuid: order._id,
+      });
+    }
+
+    if(paymentMethod === "stripe"){
+      const paymentSession = await stripePaymentGateway(order);
+      paymentInitiate = paymentSession.id;
+      // const lineItems = req.body.orderItems.map((order:any)=>({
+      //   price_data:{
+      //     currency
+      //   }
+      // }))
+    }
+   
 
     if (!order) {
       STATUS_CODE = 400;
@@ -56,7 +74,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
     return res
       .status(STATUS_CODE)
-      .json({ success: true, order, payment: paymentInitiate, id: order._id });
+      .json({ success: true, order, payment: paymentInitiate });
   } catch (err: any) {
     return res.status(STATUS_CODE).json({ success: false, error: err.message });
   }
