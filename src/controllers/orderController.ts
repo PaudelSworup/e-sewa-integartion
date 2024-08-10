@@ -71,6 +71,8 @@ export const createOrder = async (req: Request, res: Response) => {
       paymentInitiate = paymentSession.id;
     }
 
+    console.log("sending mail....");
+
     let user = await userSchema.findOne({ _id: req.body.user });
 
     const emailTemplatePath = path.join(process.cwd(), "public", "email.html");
