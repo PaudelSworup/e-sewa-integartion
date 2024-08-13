@@ -21,7 +21,7 @@ const port = process.env.PORT || 8000;
 // e-store-hz3bv8qjo-paudelsworups-projects.vercel.app
 
 const corsOptions = {
-  origin: ["https://*.vercel.app", "http://localhost:3000"],
+  origin: ["https://e-store-omega-beige.vercel.app/", "http://localhost:3000/"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   allowedHeaders: "Content-Type,Authorization",
 };
