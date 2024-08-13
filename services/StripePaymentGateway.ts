@@ -1,11 +1,13 @@
 import Stripe from "stripe";
 import orderItemModel from "../src/models/order-Item";
+import { generateEmailTemplate } from "../utils/EmailTemlate";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
 
 export const stripePaymentGateway = async (order: any) => {
   try {
     // Assuming orderItems contains ObjectIds and you're fetching product details
     // Map the orderItems to line_items
+    let product: any = null;
     const lineItems = await Promise.all(
       order.orderItems.map(async (orderItemId: any) => {
         // Fetch the product details based on the orderItemId
@@ -17,7 +19,7 @@ export const stripePaymentGateway = async (order: any) => {
           throw new Error("Order item not found");
         }
 
-        const product = orderItem.product;
+        product = orderItem.product;
 
         return {
           price_data: {
@@ -32,6 +34,30 @@ export const stripePaymentGateway = async (order: any) => {
         };
       })
     );
+
+    // const orderItemsHTML =
+    console.log(product);
+
+    //   <tr>
+    //     <td>${item.product.title}</td>
+    //     <td>${item.quantity}</td>
+    //     <td>${item.product.price}</td>
+    //   </tr>
+    // `
+    //   .join("");
+
+    // generateEmailTemplate(
+    //   user?.fullname ?? "",
+    //   order._id.toString(),
+    //   totalPrice,
+    //   orderItemsHTML,
+    //   order.shippingAddress1,
+    //   order.city,
+    //   order.country,
+    //   String(order.zip),
+    //   String(order.phone),
+    //   user?.email ?? ""
+    // );
 
     // Create a checkout session with Stripe
     const session = await stripe.checkout.sessions.create({

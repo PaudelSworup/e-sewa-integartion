@@ -7,6 +7,7 @@ import { sendOrdredEmail } from "../../utils/SendMail";
 import userSchema from "../models/authModel";
 import fs from "fs";
 import path from "path";
+import { generateEmailTemplate } from "../../utils/EmailTemlate";
 
 export const createOrder = async (req: Request, res: Response) => {
   const paymentMethod = req.query.mode as string;
@@ -75,11 +76,6 @@ export const createOrder = async (req: Request, res: Response) => {
 
     let user = await userSchema.findOne({ _id: req.body.user });
 
-    const emailTemplatePath = path.join(process.cwd(), "public", "email.html");
-
-    let emailTemplate = fs.readFileSync(emailTemplatePath, "utf8");
-
-    // Generate Order Items HTML
     const orderItemsHTML = savedOrderItems
       .map(
         (item) =>
@@ -93,25 +89,18 @@ export const createOrder = async (req: Request, res: Response) => {
       )
       .join("");
 
-    emailTemplate = emailTemplate
-      .replace("[Customer Name]", user?.fullname ?? "")
-      .replace("[Order Number]", order._id.toString())
-      .replace("[Total Price]", totalPrice)
-      .replace("[Product Name]", orderItemsHTML)
-      .replace("[Name]", user?.fullname ?? "")
-      .replace("[Address]", `${order.shippingAddress1}`)
-      .replace("[City]", order.city)
-      .replace("[State]", order.country)
-      .replace("[ZIP]", String(order.zip))
-      .replace("[Phone]", String(order.phone));
-    // .replace('[Order Details URL]', orderDetailsURL);
-
-    sendOrdredEmail({
-      from: "e-store <estorenep@gmail.com>",
-      to: user?.email ?? "",
-      subject: "order confirmation",
-      html: emailTemplate,
-    });
+    generateEmailTemplate(
+      user?.fullname ?? "",
+      order._id.toString(),
+      totalPrice,
+      orderItemsHTML,
+      order.shippingAddress1,
+      order.city,
+      order.country,
+      String(order.zip),
+      String(order.phone),
+      user?.email ?? ""
+    );
 
     return res
       .status(STATUS_CODE)
