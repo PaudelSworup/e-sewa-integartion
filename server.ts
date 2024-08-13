@@ -27,11 +27,11 @@ const corsOptions = {
 };
 
 //middlewares
+app.use(cors(corsOptions));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyparser.json());
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(cors(corsOptions));
 
 //routes
 app.use("/api", authRoutes);
