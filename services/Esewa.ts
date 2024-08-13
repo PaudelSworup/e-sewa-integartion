@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+// import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import crypto from "crypto";
 
 // const connectionString: string = process.env.DATABASE ?? "";
@@ -64,23 +64,23 @@ export const verifyEsewaPayment = async (encodedData: any) => {
       throw { message: "Invalid Info", decodedData };
     }
 
-    let reqOptions: AxiosRequestConfig = {
-      url: `${process.env.ESEWA_GATEWAY_URL}/api/epay/transaction/status/?product_code=${process.env.ESEWA_PRODUCT_CODE}&total_amount=${decodedData.total_amount}&transaction_uuid=${decodedData.transaction_uuid}`,
-      method: "GET",
-      headers: headersList,
-    };
+    // let reqOptions: AxiosRequestConfig = {
+    //   url: `${process.env.ESEWA_GATEWAY_URL}/api/epay/transaction/status/?product_code=${process.env.ESEWA_PRODUCT_CODE}&total_amount=${decodedData.total_amount}&transaction_uuid=${decodedData.transaction_uuid}`,
+    //   method: "GET",
+    //   headers: headersList,
+    // };
 
-    let response: AxiosResponse = await axios.request(reqOptions);
+    // let response: AxiosResponse = await axios.request(reqOptions);
 
-    if (
-      response.data.status !== "COMPLETE" ||
-      response.data.transaction_uuid !== decodedData.transaction_uuid ||
-      Number(response.data.total_amount) !== Number(decodedData.total_amount)
-    ) {
-      throw { message: "Invalid Info", decodedData };
-    }
+    // if (
+    //   response.data.status !== "COMPLETE" ||
+    //   response.data.transaction_uuid !== decodedData.transaction_uuid ||
+    //   Number(response.data.total_amount) !== Number(decodedData.total_amount)
+    // ) {
+    //   throw { message: "Invalid Info", decodedData };
+    // }
 
-    return { response: response.data, decodedData };
+    return { decodedData };
   } catch (error) {
     throw error;
   }
