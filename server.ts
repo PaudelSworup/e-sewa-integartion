@@ -52,9 +52,9 @@ app.use("/api", orderRoutes);
 app.use("/api", paymentRoutes);
 
 // for testing
-app.get("/", function (req, res) {
-  res.sendFile(path.join(__dirname, "public", "test.html"));
-});
+// app.get("/", function (req, res) {
+//   res.sendFile(path.join(__dirname, "public", "test.html"));
+// });
 
 app.get("/", async (req, res) => {
   res.json({ message: "hello there " });
