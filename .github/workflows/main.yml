@@ -1,0 +1,74 @@
+name: Build & Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+
+env:
+  CI: true  # Set to true for CI runs
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20  # Adjust this as per your Node.js version
+
+      # Step 3: Install Dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Build Project (Optional for Node.js Backend)
+      # For Node.js backend, this might not be necessary unless you have a build step
+      - name: Build Project (Optional)
+        run: npm run build  # Only if you have a build script for backend
+
+  run:
+    name: Run Node.js Server
+    runs-on: ubuntu-latest
+    needs: build  # Ensures 'run' only runs after 'build' is successful
+
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20  # Same Node.js version as in 'build' job
+
+      # Step 3: Install Dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Start the Node.js Server
+      - name: Start Node.js Server
+        run: |
+          npm start  # Or your custom server start command, e.g., node server.js
+        # You can also use "pm2" to keep the server running in the background if needed
+
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: run  # Ensure 'deploy' runs only after 'run' job is successful
+
+    steps:
+      # Step 1: Deploy to Vercel
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}  # Add your Vercel token in GitHub Secrets
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}  # Optional, if you have a team
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx vercel --prod --confirm  # Deploy to Vercel using Vercel CLI
