@@ -1,8 +1,9 @@
-import Stripe from "stripe";
 import orderItemModel from "../src/models/order-Item";
 import { generateEmailTemplate } from "../utils/EmailTemlate";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+import Stripe from "stripe";
 
+const KEY = process.env.STRIPE_SECRET_KEY as string;
+const stripe = new Stripe(KEY);
 export const stripePaymentGateway = async (order: any) => {
   try {
     // Assuming orderItems contains ObjectIds and you're fetching product details
@@ -71,5 +72,84 @@ export const stripePaymentGateway = async (order: any) => {
     return { id: session.id };
   } catch (err: any) {
     throw new Error(`Stripe Payment Failed: ${err.message}`);
+  }
+};
+
+export const stripeMobileService = async (order: any) => {
+  console.log("mobile", order);
+  try {
+    // Define and validate essential variables
+    if (!order || !order.orderItems) {
+      throw new Error("Order details are missing.");
+    }
+    const email = "RajjiShyamajistrores@gmail.com"; // Set the email statically or pass it as a parameter
+    const customerName = "Rajji_Shyamaji_stores";
+
+    // Create a customer with Stripe
+    const customer = await stripe.customers.create({
+      email,
+      name: customerName,
+      description: "Payment for items",
+    });
+
+    // Fetch each product for the line items
+    const lineItems = await Promise.all(
+      order.orderItems.map(async (orderItemId: any) => {
+        const orderItem = await orderItemModel
+          .findById(orderItemId)
+          .populate("product");
+
+        if (!orderItem || !orderItem.product) {
+          throw new Error(
+            `Product not found for order item ID: ${orderItemId}`
+          );
+        }
+
+        return {
+          price_data: {
+            currency: "npr",
+            product_data: {
+              name: orderItem.product.title,
+              images: [orderItem.product.image],
+            },
+            unit_amount: Math.round(orderItem.product.price * 100),
+          },
+          quantity: orderItem.quantity,
+        };
+      })
+    );
+
+    // Calculate the total amount and serialize order details for metadata
+    const totalPrice = lineItems.reduce(
+      (sum, item) => sum + item.price_data.unit_amount * item.quantity,
+      0
+    );
+    const metadata = {
+      customer_name: customerName,
+      order_items: JSON.stringify(lineItems),
+      order_total: totalPrice.toString(),
+    };
+
+    // Create a payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: totalPrice, // in cents
+      currency: "npr",
+      customer: customer.id,
+      receipt_email: email,
+      metadata,
+    });
+
+    // Return client secret for mobile app
+    return {
+      clientSecret: paymentIntent.client_secret,
+      customerId: customer.id,
+    };
+    // return res.status(STATUS_CODE).json({
+    //   success: true,
+    //   clientSecret: paymentIntent.client_secret,
+    //   customerId: customer.id,
+    // });
+  } catch (err: any) {
+    console.error("Stripe Mobile Payment Error:", err.message);
   }
 };

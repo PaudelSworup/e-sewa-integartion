@@ -7,9 +7,9 @@ interface IPayment extends Document {
   pidx: string;
   productId: any;
   amount: number;
-  dataFromVerificationReq: Record<string, any>;
-  apiQueryFromUser: Record<string, any>;
-  paymentGateway: "khalti" | "esewa" | "connectIps";
+  dataFromVerificationReq?: Record<string, any>;
+  apiQueryFromUser?: Record<string, any>;
+  paymentGateway: "khalti" | "esewa" | "connectIps" | "stripe";
   status: "success" | "pending" | "failed";
   paymentDate: Date;
   user: any;
@@ -23,7 +23,7 @@ const paymentSchema = new mongoose.Schema<IPayment>(
     pidx: { type: String, unique: true },
     productId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchasedItem",
+      ref: "Order",
       required: true,
     },
     amount: { type: Number, required: true },
@@ -47,7 +47,7 @@ const paymentSchema = new mongoose.Schema<IPayment>(
       ],
       default: "pending",
     },
-    paymentDate: { type: Date, default: Date.now },
+    paymentDate: { type: Date, default: Date.now() },
 
     user: {
       type: ObjectId,

@@ -24,9 +24,9 @@ export const getEsewaPaymentHash = async ({
   try {
     const data = `total_amount=${amount},transaction_uuid=${transaction_uuid},product_code=${process.env.ESEWA_PRODUCT_CODE}`;
 
-    const secretKey = process.env.ESEWA_SECRET_KEY ?? "";
+    // const secretKey = process.env.ESEWA_SECRET_KEY ?? "";
     const hash = crypto
-      .createHmac("sha256", secretKey)
+      .createHmac("sha256", process.env.ESEWA_SECRET_KEY ?? "")
       .update(data)
       .digest("base64");
 

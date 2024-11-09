@@ -6,6 +6,10 @@ import crypto from "crypto";
 import { addMinutes } from "date-fns";
 import { sendEmail } from "../../utils/SendMail";
 import { generateToken } from "../../utils/generateToken";
+import {
+  getGoogleTokenInfoUrl,
+  GoogleIdTokenPayload,
+} from "../../utils/GoogleTokenUrlInfo";
 
 //create user account
 export const createUserAccount = async (req: Request, res: Response) => {
@@ -232,22 +236,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       throw new Error("something went wrong");
     }
 
-    // if (token.expiresIn.getTime() < Date.now()) {
-    //  STATUS_CODE = 401
-    //  throw new Error("expired roken")
-    // }
-
-    // const resetPassword = `${process.env.CLIENT_SIDE}/api/resetpassword/${token.token}`;
-
     sendEmail({
-      //   from: "KCTLIBRARY 📧 <kct.edu.gmail.com",
-      //   to: user.email,
-      //   subject: "Password Reset",
-      //   text: `hello ${user.fullname}, click your verificatinn link to continue`,
-      //   html: `<p>Reset your password by clicking below link</p>
-      // <br>
-      // <a href="${resetPassword}"><button>Reset Your Password</button></a>`,
-
       from: "e-store <estorenep@gmail.com>",
       to: user.email,
       subject: "Password Reset successful",
@@ -299,6 +288,61 @@ export const resetPassword = async (req: Request, res: Response) => {
     return res
       .status(STATUS_CODE)
       .json({ success: true, message: "Password has been reset successfully" });
+  } catch (err: any) {
+    return res.status(STATUS_CODE).json({ success: false, error: err.message });
+  }
+};
+
+export const GoogleLogin = async (req: Request, res: Response) => {
+  let STATUS_CODE = 201;
+
+  try {
+    const googleRes: any = await getGoogleTokenInfoUrl(
+      req.params.googleIdToken
+    );
+
+    console.log("googleres", googleRes);
+    if (googleRes.aud !== process.env.GOOGLE_CLINET_ID) {
+      STATUS_CODE = 401;
+      throw new Error("Invalid token audience");
+    }
+
+    let user = await userSchema.findOne({
+      email: googleRes.email.toLowerCase(),
+    });
+
+    //if user email already exist then return save credentials
+    if (user) {
+      STATUS_CODE = 200;
+      return res.status(STATUS_CODE).json({
+        success: true,
+        user: {
+          id: user._id,
+          token: req.params.googleIdToken,
+          username: googleRes.given_name,
+          email: googleRes.email,
+          picture: googleRes.picture,
+        },
+      });
+    }
+
+    let registration = new userSchema({
+      fullname: googleRes.name,
+      email: googleRes.email.toLowerCase(),
+      googleLogin: true,
+      isVerified: true,
+    });
+    await registration.save();
+
+    return res.status(STATUS_CODE).json({
+      success: true,
+      user: {
+        id: registration._id,
+        token: req.params.googleIdToken,
+        username: googleRes.given_name,
+        email: googleRes.email,
+      },
+    });
   } catch (err: any) {
     return res.status(STATUS_CODE).json({ success: false, error: err.message });
   }

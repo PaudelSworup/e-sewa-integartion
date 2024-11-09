@@ -2,7 +2,10 @@ import { Request, Response } from "express";
 import orderSchema from "../models/orderModel";
 import orderItemSchema from "../models/order-Item";
 import { getEsewaPaymentHash } from "../../services/Esewa";
-import { stripePaymentGateway } from "../../services/StripePaymentGateway";
+import {
+  stripeMobileService,
+  stripePaymentGateway,
+} from "../../services/StripePaymentGateway";
 import { sendOrdredEmail } from "../../utils/SendMail";
 import userSchema from "../models/authModel";
 import fs from "fs";
@@ -32,6 +35,8 @@ export const createOrder = async (req: Request, res: Response) => {
     const savedOrderItems = await orderItemSchema.find({
       _id: { $in: orderItemIdResolved },
     });
+
+    console.log("...here");
 
     const totalPrice = savedOrderItems
       .reduce((total, item) => {
@@ -72,35 +77,38 @@ export const createOrder = async (req: Request, res: Response) => {
       paymentInitiate = paymentSession.id;
     }
 
-    console.log("sending mail....");
+    if (paymentMethod === "stripemobile") {
+      const mobilePayment = await stripeMobileService(order);
+      paymentInitiate = mobilePayment;
+    }
 
-    let user = await userSchema.findOne({ _id: req.body.user });
+    // let user = await userSchema.findOne({ _id: req.body.user });
 
-    const orderItemsHTML = savedOrderItems
-      .map(
-        (item) =>
-          `
-      <tr>
-        <td>${item.product.title}</td>
-        <td>${item.quantity}</td>
-        <td>${item.product.price}</td>
-      </tr>
-    `
-      )
-      .join("");
+    // const orderItemsHTML = savedOrderItems
+    //   .map(
+    //     (item) =>
+    //       `
+    //   <tr>
+    //     <td>${item.product.title}</td>
+    //     <td>${item.quantity}</td>
+    //     <td>${item.product.price}</td>
+    //   </tr>
+    // `
+    //   )
+    //   .join("");
 
-    generateEmailTemplate(
-      user?.fullname ?? "",
-      order._id.toString(),
-      totalPrice,
-      orderItemsHTML,
-      order.shippingAddress1,
-      order.city,
-      order.country,
-      String(order.zip),
-      String(order.phone),
-      user?.email ?? ""
-    );
+    // generateEmailTemplate(
+    //   user?.fullname ?? "",
+    //   order._id.toString(),
+    //   totalPrice,
+    //   orderItemsHTML,
+    //   order.shippingAddress1,
+    //   order.city,
+    //   order.country,
+    //   String(order.zip),
+    //   String(order.phone),
+    //   user?.email ?? ""
+    // );
 
     return res
       .status(STATUS_CODE)
