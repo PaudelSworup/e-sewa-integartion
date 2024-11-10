@@ -2,4 +2,6 @@
 node_modules
 .dockerignore
 Dockerfile
+.vercel
+
 
