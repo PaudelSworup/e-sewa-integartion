@@ -56,10 +56,6 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Authenticate with Vercel
-        run: |
-          echo ${{ secrets.VERCEL_TOKEN }} | vercel login --token
-
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
