@@ -26,9 +26,7 @@ jobs:
         run: npm install
 
       - name: Build Project
-        run: |
-          npm run build
-          ls -la dist  # Check the contents of the dist folder
+        run: npm run build
 
   run:
     name: Run Node.js Server
@@ -47,16 +45,21 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Start Node.js Server
-        run: |
-          npm start  # Should be fixed if dist/server.js is available
+      - name: Install ts-node for Running TypeScript Directly
+        run: npm install -g ts-node
+
+      - name: Start Node.js Server with ts-node
+        run: ts-node server.ts # Path may vary based on your folder structure
 
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: run
+    needs: build
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
