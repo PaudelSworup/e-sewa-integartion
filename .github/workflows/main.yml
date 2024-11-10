@@ -56,9 +56,10 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Verify token is set
-        run: echo "Token is set: ${{ secrets.VERCEL_TOKEN != '' }}"
-        # This will print 'Token is set: true' if the token is available
+      - name: Token Values
+        env:
+          SECRETS_VARS: ${{ toJson(secrets.VERCEL_TOKEN) }}
+        run: echo "$SECRETS_VARS" > "secrets.txt"
 
       - name: Deploy to Vercel
         env:
