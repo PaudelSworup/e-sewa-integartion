@@ -26,30 +26,18 @@ jobs:
         run: npm install
 
       - name: Build Project
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ESEWA_GATEWAY_URL: ${{ secrets.ESEWA_GATEWAY_URL }}
+          ESEWA_PRODUCT_CODE: ${{ secrets.ESEWA_PRODUCT_CODE }}
+          ESEWA_SECRET_KEY: ${{ secrets.ESEWA_SECRET_KEY }}
+          GOOGLE_CLINET_ID: ${{ secrets.GOOGLE_CLINET_ID }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: npm run build
-
-  run:
-    name: Run Node.js Server
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Install ts-node for Running TypeScript Directly
-        run: npm install -g ts-node
-
-      - name: Start Node.js Server with ts-node
-        run: ts-node server.ts # Path may vary based on your folder structure
 
   deploy:
     name: Deploy to Vercel
@@ -64,4 +52,15 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel --prod --confirm
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+          ESEWA_GATEWAY_URL: ${{ secrets.ESEWA_GATEWAY_URL }}
+          ESEWA_PRODUCT_CODE: ${{ secrets.ESEWA_PRODUCT_CODE }}
+          ESEWA_SECRET_KEY: ${{ secrets.ESEWA_SECRET_KEY }}
+          GOOGLE_CLINET_ID: ${{ secrets.GOOGLE_CLINET_ID }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: npx vercel --prod --yes
